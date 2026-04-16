@@ -39,9 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # my apps
-
+    'card',
     # other packages
     'rest_framework',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -115,6 +116,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+AUTH_USER_MODEL='card.User'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
