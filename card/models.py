@@ -15,6 +15,42 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+class Error(models.Model):
+    code = models.IntegerField(unique=True)
+    en = models.CharField(max_length=255)
+    ru = models.CharField(max_length=255)
+    uz = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.code} - {self.en}"
+
+class Transfer(models.Model):
+    STATE_CHOICES = (
+        ('created', 'Created'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+    )
+    ext_id = models.CharField(max_length=100, unique=True)
+    sender_card_number = models.CharField(max_length=16)
+    receiver_card_number = models.CharField(max_length=16)
+    sender_card_expiry = models.CharField(max_length=10)
+    sender_phone = models.CharField(max_length=20, null=True, blank=True)
+    receiver_phone = models.CharField(max_length=20, null=True, blank=True)
+    sending_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    currency = models.IntegerField() # 643 (RUB), 840 (USD)
+    receiving_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    state = models.CharField(max_length=20, choices=STATE_CHOICES, default='created')
+    try_count = models.IntegerField(default=0)
+    otp = models.CharField(max_length=6, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Transfer {self.ext_id} ({self.state})"
+
 
 class Card(models.Model):
     STATUS_CHOICES = (
@@ -28,7 +64,7 @@ class Card(models.Model):
     phone = models.CharField(max_length=20, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=ACTIVE)
     balance = models.DecimalField(
-        max_digits=16,
+        max_digits=18,
         decimal_places=2,
         default=0
     )
@@ -38,9 +74,9 @@ class Card(models.Model):
         errors = {}
 
         #  Karta raqamini Luhn algoritmi bo'yicha tekshirish
-        if self.card_number:
-            if not is_luhn_valid(self.card_number):
-                errors['card_number'] = f"Karta raqami xato: {self.card_number}"
+        # if self.card_number:
+        #     if not is_luhn_valid(self.card_number):
+        #         errors['card_number'] = f"Karta raqami xato: {self.card_number}"
 
         if self.phone:
             try:
@@ -62,9 +98,9 @@ class Card(models.Model):
         if errors:
             raise ValidationError(errors)
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.full_clean()
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.card_number} ({self.get_status_display()})"
